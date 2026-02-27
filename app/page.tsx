@@ -62,7 +62,7 @@ export default function DashboardGempa() {
           </div>
           {statusGempa === "BAHAYA" && (
             <p className="text-red-400 text-sm mt-2 font-bold animate-pulse">
-              ⚠️ Peringatan: Goncangan meja sangat kuat!
+              ⚠️ Peringatan: GEMPA GEMPA!
             </p>
           )}
           {statusGempa === "WASPADA" && (

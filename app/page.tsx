@@ -1,49 +1,33 @@
 "use client";
-import { useState, useEffect } from "react";
-import { ref, onValue } from "firebase/database";
-import { db } from "../lib/firebase"; 
+import { useState } from "react";
 
 export default function DashboardGempa() {
   const [statusGempa, setStatusGempa] = useState("AMAN");
-  // Nama variabel kita ubah jadi jarakStruktur agar lebih sesuai
-  const [jarakStruktur, setJarakStruktur] = useState(0.0);
+  const [jarakStruktur, setJarakStruktur] = useState(15.0); // Dummy data awal jarak tembok
   const [warnaLed, setWarnaLed] = useState("bg-green-500");
   const [teksLcd, setTeksLcd] = useState("KONDISI AMAN");
 
-  // --- KONEKSI FIREBASE REAL-TIME ---
-  useEffect(() => {
-    const sensorRef = ref(db, '/'); 
+  // --- FUNGSI SIMULASI DUMMY DATA ---
+  const picuWaspada = () => {
+    setStatusGempa("WASPADA");
+    setJarakStruktur(14.2); // Jarak berubah sedikit karena getaran ringan
+    setWarnaLed("bg-yellow-500");
+    setTeksLcd("AWAS! GETARAN");
+  };
 
-    const unsubscribe = onValue(sensorRef, (snapshot) => {
-      const data = snapshot.val();
-      
-      if (data) {
-        // 1. Menangkap data 'dst' (Jarak HC-SR04 ke objek di depannya)
-        if (data.dst !== undefined) {
-          setJarakStruktur(data.dst);
-        }
+  const picuBahaya = () => {
+    setStatusGempa("BAHAYA");
+    setJarakStruktur(10.5); // Jarak berubah drastis karena struktur bergeser/retak
+    setWarnaLed("bg-red-500 animate-pulse");
+    setTeksLcd("BAHAYA GEMPA!!");
+  };
 
-        // 2. Menangkap data 'shock' (Sensor Getar)
-        if (data.shock !== undefined) {
-          if (data.shock === 1 || data.shock === "BAHAYA") {
-            setStatusGempa("BAHAYA");
-            setTeksLcd("BAHAYA GEMPA!!");
-            setWarnaLed("bg-red-500 animate-pulse");
-          } else if (data.shock === 2 || data.shock === "WASPADA") {
-            setStatusGempa("WASPADA");
-            setTeksLcd("AWAS! GETARAN");
-            setWarnaLed("bg-yellow-500");
-          } else {
-            setStatusGempa("AMAN");
-            setTeksLcd("KONDISI AMAN");
-            setWarnaLed("bg-green-500");
-          }
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const resetKondisi = () => {
+    setStatusGempa("AMAN");
+    setJarakStruktur(15.0);
+    setWarnaLed("bg-green-500");
+    setTeksLcd("KONDISI AMAN");
+  };
 
   // --- ANTARMUKA (UI) ---
   return (
@@ -66,7 +50,7 @@ export default function DashboardGempa() {
           </div>
         </div>
 
-        {/* Kartu 2: Pembacaan Sensor HC-SR04 (Kembali ke konsep jarak) */}
+        {/* Kartu 2: Pembacaan Sensor HC-SR04 (Konsep Jarak Objek) */}
         <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 flex flex-col justify-center transition-all">
           <h2 className="text-gray-400 font-semibold mb-1">Sensor HC-SR04</h2>
           <p className="text-lg font-bold mb-4">Jarak ke Objek / Dinding</p>
@@ -76,7 +60,7 @@ export default function DashboardGempa() {
             </span>
             <span className="text-2xl text-gray-400 mb-1">cm</span>
           </div>
-           {/* Logika peringatan tambahan jika terjadi gempa */}
+           {/* Peringatan tambahan jika terjadi gempa */}
            {statusGempa === "BAHAYA" && (
             <p className="text-red-400 text-sm mt-2 font-bold animate-pulse">
               ⚠️ Perhatikan perubahan jarak! Jika angka berubah drastis, struktur bangunan mungkin bergeser.
@@ -102,6 +86,32 @@ export default function DashboardGempa() {
           </div>
         </div>
       </div>
+
+      {/* --- PANEL SIMULASI --- */}
+      <div className="max-w-4xl mx-auto mt-12 p-6 border-2 border-dashed border-gray-600 rounded-xl bg-gray-800/50 flex flex-col items-center">
+        <h3 className="text-yellow-400 font-bold mb-4">🛠️ Panel Simulasi (Dummy Data)</h3>
+        <div className="flex flex-wrap justify-center gap-4">
+          <button 
+            onClick={resetKondisi}
+            className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg transition-colors border-2 border-green-700"
+          >
+            🟢 Diam (Aman)
+          </button>
+          <button 
+            onClick={picuWaspada}
+            className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg transition-colors border-2 border-yellow-700"
+          >
+            🟡 Ada Getaran (Waspada)
+          </button>
+          <button 
+            onClick={picuBahaya}
+            className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-lg transition-colors border-2 border-red-700"
+          >
+            🔴 Gempa Besar! (Bahaya)
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }

@@ -1,45 +1,61 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ref, onValue } from "firebase/database";
+import { db } from "../lib/firebase"; 
 
 export default function DashboardGempa() {
   const [statusGempa, setStatusGempa] = useState("AMAN");
-  const [amplitudoGoyangan, setAmplitudoGoyangan] = useState(0.0); 
+  // Nama variabel kita ubah jadi jarakStruktur agar lebih sesuai
+  const [jarakStruktur, setJarakStruktur] = useState(0.0);
   const [warnaLed, setWarnaLed] = useState("bg-green-500");
   const [teksLcd, setTeksLcd] = useState("KONDISI AMAN");
 
-  // --- FUNGSI SIMULASI ---
-  const picuWaspada = () => {
-    setStatusGempa("WASPADA");
-    setAmplitudoGoyangan(3.4); // Getaran kecil, meja bergeser sedikit
-    setWarnaLed("bg-yellow-500"); // LED Kuning menyala
-    setTeksLcd("AWAS! GETARAN");
-  };
+  // --- KONEKSI FIREBASE REAL-TIME ---
+  useEffect(() => {
+    const sensorRef = ref(db, '/'); 
 
-  const picuBahaya = () => {
-    setStatusGempa("BAHAYA");
-    setAmplitudoGoyangan(14.8); // Getaran hebat, meja bergeser jauh
-    setWarnaLed("bg-red-500 animate-pulse"); // LED Merah berkedip
-    setTeksLcd("BAHAYA GEMPA!!");
-  };
+    const unsubscribe = onValue(sensorRef, (snapshot) => {
+      const data = snapshot.val();
+      
+      if (data) {
+        // 1. Menangkap data 'dst' (Jarak HC-SR04 ke objek di depannya)
+        if (data.dst !== undefined) {
+          setJarakStruktur(data.dst);
+        }
 
-  const resetKondisi = () => {
-    setStatusGempa("AMAN");
-    setAmplitudoGoyangan(0.0);
-    setWarnaLed("bg-green-500");
-    setTeksLcd("KONDISI AMAN");
-  };
+        // 2. Menangkap data 'shock' (Sensor Getar)
+        if (data.shock !== undefined) {
+          if (data.shock === 1 || data.shock === "BAHAYA") {
+            setStatusGempa("BAHAYA");
+            setTeksLcd("BAHAYA GEMPA!!");
+            setWarnaLed("bg-red-500 animate-pulse");
+          } else if (data.shock === 2 || data.shock === "WASPADA") {
+            setStatusGempa("WASPADA");
+            setTeksLcd("AWAS! GETARAN");
+            setWarnaLed("bg-yellow-500");
+          } else {
+            setStatusGempa("AMAN");
+            setTeksLcd("KONDISI AMAN");
+            setWarnaLed("bg-green-500");
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // --- ANTARMUKA (UI) ---
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8 font-sans">
       <div className="text-center mb-10">
         <h1 className="text-4xl font-extrabold text-blue-400">QuakeGuard Dashboard</h1>
-        <p className="text-gray-400 mt-2">Sistem Deteksi Getaran & Pergeseran Posisi</p>
+        <p className="text-gray-400 mt-2">Sistem Deteksi Gempa & Integritas Struktur Bangunan</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
         
-        {/* Kartu 1: Status Utama */}
+        {/* Kartu 1: Status Utama (Sensor Getar) */}
         <div className={`p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center transition-all duration-500 
           ${statusGempa === "BAHAYA" ? "bg-red-600 shadow-red-500/50" : 
             statusGempa === "WASPADA" ? "bg-yellow-500 shadow-yellow-500/50 text-gray-900" : 
@@ -50,24 +66,20 @@ export default function DashboardGempa() {
           </div>
         </div>
 
-        {/* Kartu 2: Pembacaan Sensor HC-SR04 (Konsep Baru) */}
+        {/* Kartu 2: Pembacaan Sensor HC-SR04 (Kembali ke konsep jarak) */}
         <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 flex flex-col justify-center transition-all">
           <h2 className="text-gray-400 font-semibold mb-1">Sensor HC-SR04</h2>
-          <p className="text-lg font-bold mb-4">Amplitudo Pergeseran Alat</p>
+          <p className="text-lg font-bold mb-4">Jarak ke Objek / Dinding</p>
           <div className="flex items-end gap-2">
             <span className={`text-6xl font-black ${statusGempa === "AMAN" ? "text-blue-400" : statusGempa === "WASPADA" ? "text-yellow-400" : "text-red-400"}`}>
-              {amplitudoGoyangan}
+              {jarakStruktur}
             </span>
             <span className="text-2xl text-gray-400 mb-1">cm</span>
           </div>
-          {statusGempa === "BAHAYA" && (
+           {/* Logika peringatan tambahan jika terjadi gempa */}
+           {statusGempa === "BAHAYA" && (
             <p className="text-red-400 text-sm mt-2 font-bold animate-pulse">
-              ⚠️ Peringatan: GEMPA GEMPA!
-            </p>
-          )}
-          {statusGempa === "WASPADA" && (
-            <p className="text-yellow-400 text-sm mt-2 font-bold">
-              ⚠️ Terdeteksi getaran ringan.
+              ⚠️ Perhatikan perubahan jarak! Jika angka berubah drastis, struktur bangunan mungkin bergeser.
             </p>
           )}
         </div>
@@ -88,31 +100,6 @@ export default function DashboardGempa() {
               {teksLcd}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* --- PANEL SIMULASI --- */}
-      <div className="max-w-4xl mx-auto mt-12 p-6 border-2 border-dashed border-gray-600 rounded-xl bg-gray-800/50 flex flex-col items-center">
-        <h3 className="text-yellow-400 font-bold mb-4">🛠️ Panel Simulasi Goncangan Meja</h3>
-        <div className="flex flex-wrap justify-center gap-4">
-          <button 
-            onClick={resetKondisi}
-            className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg transition-colors border-2 border-green-700"
-          >
-            🟢 Diam (Aman)
-          </button>
-          <button 
-            onClick={picuWaspada}
-            className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg transition-colors border-2 border-yellow-700"
-          >
-            🟡 Goyang Sedikit (Waspada)
-          </button>
-          <button 
-            onClick={picuBahaya}
-            className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-lg transition-colors border-2 border-red-700"
-          >
-            🔴 Goyang Hebat! (Bahaya)
-          </button>
         </div>
       </div>
     </div>

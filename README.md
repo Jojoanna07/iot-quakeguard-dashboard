@@ -1,6 +1,6 @@
 # 🌍 QuakeGuard: IoT Earthquake & Structural Integrity Monitor
 
-**QuakeGuard** adalah prototipe sistem cerdas berbasis Internet of Things (IoT) yang dirancang untuk mendeteksi getaran seismik (gempa) serta memantau integritas struktur bangunan secara *real-time*. Proyek ini dikembangkan oleh **Kelompok 1** untuk **Cyber Recruitment 2026 - Project 1 (IoT)**.
+**QuakeGuard** adalah prototipe sistem cerdas berbasis Internet of Things (IoT) yang dirancang untuk mendeteksi getaran seismik (gempa) serta memantau integritas struktur bangunan secara *real-time*. Proyek ini dikembangkan oleh **Kelompok 1** untuk **Cyber Recruitment 2026 - Project 2 (IoT)**.
 
 ## 📖 Ringkasan Proyek
 Sistem ini menggunakan ESP32-S3 yang terhubung dengan berbagai sensor untuk membaca kondisi lingkungan secara presisi. Data perangkat keras dikirimkan secara paralel ke **Firebase Realtime Database** dan **Blynk**, yang kemudian disajikan melalui *dashboard* interaktif berbasis web (Next.js) untuk pemantauan jarak jauh tanpa *delay*.

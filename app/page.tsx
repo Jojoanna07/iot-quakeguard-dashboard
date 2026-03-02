@@ -19,7 +19,7 @@ export default function DashboardGempa() {
       
       if (data) {
         if (data.distance_cm !== undefined) {
-          setJarakStruktur(Number(data.distance_cm).toFixed(1)); 
+          setJarakStruktur(parseFloat(Number(data.distance_cm).toFixed(1))); 
         }
 
         if (data.shock !== undefined) {
